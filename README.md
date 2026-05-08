@@ -24,6 +24,26 @@ The Kong Ingress Controller itself is not installed by this repo. Install it sep
 kubectl apply -k k8s/kong
 ```
 
+### GitHub Actions
+
+This repo includes a workflow that:
+- applies `k8s/kong` to the `production` environment on every push to `main`
+- applies `k8s/kong` to the `development` environment when someone comments `.deploy` on a pull request
+
+Configure these GitHub Environment variables in both the `production` and `development` environments:
+- `GKE_CLUSTER`
+- `GKE_LOCATION`
+- `WORKLOAD_IDENTITY_PROVIDER`
+- `SERVICE_ACCOUNT`
+
+The workflow uses Workload Identity to authenticate to GKE and then runs:
+
+```bash
+kubectl apply -k k8s/kong
+```
+
+For pull request deployments, the workflow checks out the pull request HEAD commit and only allows `.deploy` from open pull requests in the same repository.
+
 ### Verify
 
 ```bash

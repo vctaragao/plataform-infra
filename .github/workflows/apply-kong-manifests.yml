@@ -1,0 +1,116 @@
+name: Apply Kong Platform Manifests
+
+on:
+  push:
+    branches:
+      - main
+  issue_comment:
+    types:
+      - created
+  workflow_dispatch:
+
+concurrency:
+  group: apply-kong-manifests-${{ github.event_name == 'issue_comment' && 'development' || 'production' }}
+  cancel-in-progress: true
+
+jobs:
+  apply-kong-manifests:
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        github.event.comment.body == '.deploy'
+      )
+    name: Apply Kong Platform Manifests
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'issue_comment' && 'development' || 'production' }}
+    env:
+      TARGET_ENVIRONMENT: ${{ github.event_name == 'issue_comment' && 'development' || 'production' }}
+      GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}
+      GKE_LOCATION: ${{ vars.GKE_LOCATION }}
+      WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+      SERVICE_ACCOUNT: ${{ vars.SERVICE_ACCOUNT }}
+
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
+
+    steps:
+      - id: pr
+        name: Resolve pull request revision
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            if (pr.data.state !== 'open') {
+              core.setFailed('Only open pull requests can be deployed to development.');
+              return;
+            }
+
+            if (pr.data.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
+              core.setFailed('Pull request deployments from forks are not allowed.');
+              return;
+            }
+
+            core.setOutput('sha', pr.data.head.sha);
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'issue_comment' && steps.pr.outputs.sha || github.sha }}
+
+      - name: Validate workflow configuration
+        run: |
+          set -euo pipefail
+          missing=0
+
+          for var_name in \
+            GKE_CLUSTER \
+            GKE_LOCATION \
+            WORKLOAD_IDENTITY_PROVIDER \
+            SERVICE_ACCOUNT
+          do
+            if [ -z "${!var_name}" ]; then
+              echo "Missing required GitHub environment variable: ${var_name}" >&2
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            echo "Configure the missing values in GitHub Environment vars for the ${TARGET_ENVIRONMENT} environment." >&2
+            exit 1
+          fi
+
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_LOCATION }}
+
+      - name: Apply Kong platform manifests
+        run: |
+          set -euo pipefail
+          kubectl apply -k k8s/kong
+
+      - name: Verify Kong platform resources
+        run: |
+          set -euo pipefail
+          kubectl get gatewayclass kong
+          kubectl get gateway -n kong shared-kong-gateway
+          kubectl get svc -n kong kong-gateway-proxy
