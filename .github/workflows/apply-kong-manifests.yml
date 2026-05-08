@@ -96,6 +96,7 @@ jobs:
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
+          token_format: access_token
 
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v2
