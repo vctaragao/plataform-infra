@@ -12,7 +12,6 @@ spec:
     config:
       type: HTTP
       httpHealthCheck:
-        port: 80
         host: api.moraes.lat
         requestPath: /auth/health
   targetRef:
