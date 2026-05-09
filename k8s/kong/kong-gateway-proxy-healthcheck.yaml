@@ -14,7 +14,7 @@ spec:
       httpHealthCheck:
         port: 80
         host: api.moraes.lat
-        requestPath: /auth/public-key
+        requestPath: /auth/health
   targetRef:
     group: ""
     kind: Service
