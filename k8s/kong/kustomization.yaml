@@ -8,3 +8,4 @@ resources:
   - api-moraes-lat-gateway.yaml
   - api-moraes-lat-route.yaml
   - kong-gateway-proxy-healthcheck.yaml
+  - kong-cluster-plugin-jwt.yaml
