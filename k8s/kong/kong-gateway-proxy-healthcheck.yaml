@@ -1,0 +1,21 @@
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: kong-gateway-proxy-healthcheck
+  namespace: kong
+spec:
+  default:
+    checkIntervalSec: 15
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    config:
+      type: HTTP
+      httpHealthCheck:
+        port: 80
+        host: api.moraes.lat
+        requestPath: /auth/public-key
+  targetRef:
+    group: ""
+    kind: Service
+    name: kong-gateway-proxy
