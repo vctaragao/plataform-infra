@@ -1,0 +1,33 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: moraes-lat-gateway
+  namespace: kong
+spec:
+  gatewayClassName: gke-l7-global-external-managed
+  addresses:
+    - type: NamedAddress
+      value: moraes-lat-ip
+  listeners:
+    - name: app-https
+      protocol: HTTPS
+      port: 443
+      hostname: moraes.lat
+      tls:
+        mode: Terminate
+        options:
+          networking.gke.io/pre-shared-certs: moraes-lat-cert
+      allowedRoutes:
+        namespaces:
+          from: Same
+    - name: api-https
+      protocol: HTTPS
+      port: 443
+      hostname: api.moraes.lat
+      tls:
+        mode: Terminate
+        options:
+          networking.gke.io/pre-shared-certs: api-moraes-lat-cert
+      allowedRoutes:
+        namespaces:
+          from: Same

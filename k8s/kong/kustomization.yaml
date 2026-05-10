@@ -5,7 +5,8 @@ resources:
   - namespace.yaml
   - gatewayclass.yaml
   - gateway.yaml
-  - api-moraes-lat-gateway.yaml
   - api-moraes-lat-route.yaml
+  - moraes-lat-gateway.yaml
+  - moraes-lat-route.yaml
   - kong-gateway-proxy-healthcheck.yaml
   - kong-cluster-plugin-jwt.yaml
