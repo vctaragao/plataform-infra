@@ -12,8 +12,7 @@ spec:
     config:
       type: HTTP
       httpHealthCheck:
-        host: api.moraes.lat
-        requestPath: /auth/health
+        requestPath: /lb-healthz
   targetRef:
     group: ""
     kind: Service
