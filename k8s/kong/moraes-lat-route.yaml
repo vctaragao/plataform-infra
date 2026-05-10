@@ -1,14 +1,14 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: api-moraes-lat-route
+  name: moraes-lat-route
   namespace: kong
 spec:
   parentRefs:
     - name: moraes-lat-gateway
-      sectionName: api-https
+      sectionName: app-https
   hostnames:
-    - api.moraes.lat
+    - moraes.lat
   rules:
     - matches:
         - path:
