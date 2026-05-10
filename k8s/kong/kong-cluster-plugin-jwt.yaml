@@ -6,6 +6,7 @@ metadata:
     kubernetes.io/ingress.class: kong
 plugin: jwt
 config:
+  run_on_preflight: false
   claims_to_verify:
     - exp
     - nbf
