@@ -14,6 +14,8 @@ locals {
   }
 
   github_actions_project_roles = toset([
+    "roles/browser",
+    "roles/compute.viewer",
     "roles/iam.serviceAccountViewer",
     "roles/serviceusage.serviceUsageViewer",
   ])
