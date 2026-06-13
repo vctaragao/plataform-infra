@@ -5,8 +5,8 @@ metadata:
   namespace: kong
 spec:
   parentRefs:
-    - name: moraes-lat-gateway
-      sectionName: api-https
+    - name: shared-kong-gateway
+      namespace: kong
   hostnames:
     - api.moraes.lat
   rules:
