@@ -33,6 +33,14 @@ For local Terraform work, use your user credentials instead of the `google-sheet
 env -u GOOGLE_APPLICATION_CREDENTIALS terraform -chdir=live/dev/global/project-services plan
 ```
 
+GitHub Actions:
+- `Terraform Checks` runs `fmt` and `validate`
+- `Terraform Dev Plan` runs a real `terraform plan` against the bootstrap and `live/dev` stacks using Workload Identity from the `development` GitHub Environment
+
+Required GitHub Environment vars for `development`:
+- `WORKLOAD_IDENTITY_PROVIDER`
+- `SERVICE_ACCOUNT`
+
 The legacy generated import layout at the repo root has been retired in favor of the `live/` and `modules/` structure.
 
 ## Kong shared gateway

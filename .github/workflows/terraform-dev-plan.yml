@@ -1,0 +1,102 @@
+name: Terraform Dev Plan
+
+on:
+  pull_request:
+    paths:
+      - 'live/**'
+      - 'modules/**'
+      - '.github/workflows/terraform-dev-plan.yml'
+      - 'Makefile'
+  push:
+    branches:
+      - main
+    paths:
+      - 'live/**'
+      - 'modules/**'
+      - '.github/workflows/terraform-dev-plan.yml'
+      - 'Makefile'
+  workflow_dispatch:
+
+concurrency:
+  group: terraform-dev-plan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    name: Terraform plan (${{ matrix.stack.name }})
+    runs-on: ubuntu-latest
+    environment: development
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - name: bootstrap-state-bucket
+            dir: live/bootstrap/state-bucket
+          - name: dev-project-services
+            dir: live/dev/global/project-services
+          - name: dev-service-accounts
+            dir: live/dev/global/service-accounts
+          - name: dev-artifact-registry
+            dir: live/dev/us-central1/artifact-registry
+          - name: dev-gke-cluster
+            dir: live/dev/us-central1-a/gke-cluster
+    env:
+      WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+      SERVICE_ACCOUNT: ${{ vars.SERVICE_ACCOUNT }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate workflow configuration
+        run: |
+          set -euo pipefail
+          missing=0
+
+          for var_name in \
+            WORKLOAD_IDENTITY_PROVIDER \
+            SERVICE_ACCOUNT
+          do
+            if [ -z "${!var_name}" ]; then
+              echo "Missing required GitHub environment variable: ${var_name}" >&2
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            echo "Configure the missing values in the GitHub Environment vars for the development environment." >&2
+            exit 1
+          fi
+
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.4
+
+      - name: Terraform init
+        run: terraform -chdir=${{ matrix.stack.dir }} init -input=false
+
+      - name: Terraform plan
+        run: terraform -chdir=${{ matrix.stack.dir }} plan -input=false -out=tfplan -no-color
+
+      - name: Export plan text
+        run: terraform -chdir=${{ matrix.stack.dir }} show -no-color tfplan > "${{ runner.temp }}/${{ matrix.stack.name }}.plan.txt"
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ matrix.stack.name }}
+          path: ${{ runner.temp }}/${{ matrix.stack.name }}.plan.txt
