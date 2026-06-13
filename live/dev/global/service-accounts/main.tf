@@ -1,5 +1,6 @@
 locals {
-  project_id = "teste-projet-496019"
+  project_id            = "teste-projet-496019"
+  github_actions_member = "serviceAccount:github-actions-deployer@teste-projet-496019.iam.gserviceaccount.com"
 
   service_accounts = {
     github-actions-deployer = {
@@ -11,6 +12,11 @@ locals {
       description  = "Conta de serviço para se comunicar com google sheets"
     }
   }
+
+  github_actions_project_roles = toset([
+    "roles/iam.serviceAccountViewer",
+    "roles/serviceusage.serviceUsageViewer",
+  ])
 }
 
 module "service_accounts" {
@@ -18,4 +24,12 @@ module "service_accounts" {
 
   project_id       = local.project_id
   service_accounts = local.service_accounts
+}
+
+resource "google_project_iam_member" "github_actions_project_roles" {
+  for_each = local.github_actions_project_roles
+
+  project = local.project_id
+  role    = each.value
+  member  = local.github_actions_member
 }

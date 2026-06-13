@@ -36,6 +36,8 @@ env -u GOOGLE_APPLICATION_CREDENTIALS terraform -chdir=live/dev/global/project-s
 GitHub Actions:
 - `Terraform Checks` runs `fmt` and `validate`
 - `Terraform Dev Plan` runs a real `terraform plan` against the bootstrap and `live/dev` stacks using Workload Identity from the `development` GitHub Environment
+- on pull requests, each stack also posts or updates its own plan comment on the PR
+- full plan output remains available as a workflow artifact for each stack
 
 Required GitHub Environment vars for `development`:
 - `WORKLOAD_IDENTITY_PROVIDER`
