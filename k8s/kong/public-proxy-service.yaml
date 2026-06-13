@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-gateway-proxy
+  namespace: kong
+  annotations:
+    cloud.google.com/backend-config: '{"ports":{"80":"kong-public-backend"}}'
+    cloud.google.com/neg: '{"ingress":true}'
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/component: app
+    app.kubernetes.io/instance: kong
+    app.kubernetes.io/name: gateway
+  ports:
+    - name: kong-proxy
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+    - name: kong-proxy-tls
+      port: 443
+      protocol: TCP
+      targetPort: 8443
