@@ -1,0 +1,53 @@
+name: Terraform Checks
+
+on:
+  pull_request:
+    paths:
+      - 'live/**'
+      - 'modules/**'
+      - '.github/workflows/terraform-checks.yml'
+      - 'Makefile'
+  push:
+    branches:
+      - main
+    paths:
+      - 'live/**'
+      - 'modules/**'
+      - '.github/workflows/terraform-checks.yml'
+      - 'Makefile'
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.4
+      - name: Check formatting
+        run: terraform fmt -check -recursive
+
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - modules/gcp/project-services
+          - modules/gcp/service-account
+          - modules/gcp/artifact-registry
+          - modules/gcp/gke-cluster
+          - live/bootstrap/state-bucket
+          - live/dev/global/project-services
+          - live/dev/global/service-accounts
+          - live/dev/us-central1/artifact-registry
+          - live/dev/us-central1-a/gke-cluster
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.4
+      - name: Init without backend
+        run: terraform -chdir=${{ matrix.dir }} init -backend=false -reconfigure
+      - name: Validate
+        run: terraform -chdir=${{ matrix.dir }} validate
