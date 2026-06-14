@@ -3,12 +3,13 @@ kind: Kustomization
 
 resources:
   - namespace.yaml
+  - api-moraes-lat-route.yaml
+  - backendconfig.yaml
   - gatewayclass.yaml
   - gateway.yaml
-  - api-moraes-lat-route.yaml
+  - managed-certificate.yaml
+  - public-ingress.yaml
+  - public-proxy-service.yaml
   - kong-lb-healthz-backend.yaml
   - kong-lb-healthz-route.yaml
-  - moraes-lat-gateway.yaml
-  - moraes-lat-route.yaml
-  - kong-gateway-proxy-healthcheck.yaml
   - kong-cluster-plugin-jwt.yaml

@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: moraes-public-edge
+  namespace: kong
+  annotations:
+    kubernetes.io/ingress.class: gce
+    kubernetes.io/ingress.global-static-ip-name: moraes-lat-ip
+    networking.gke.io/managed-certificates: moraes-public-cert
+spec:
+  ingressClassName: gce
+  rules:
+    - host: moraes.lat
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kong-gateway-proxy
+                port:
+                  number: 80
+    - host: api.moraes.lat
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kong-gateway-proxy
+                port:
+                  number: 80

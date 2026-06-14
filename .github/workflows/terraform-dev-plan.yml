@@ -1,0 +1,180 @@
+name: Terraform Dev Plan
+
+on:
+  issue_comment:
+    types:
+      - created
+
+concurrency:
+  group: terraform-dev-plan-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    if: >-
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.comment.body == '.plan'
+    name: Terraform plan (${{ matrix.stack.name }})
+    runs-on: ubuntu-latest
+    environment: development
+    permissions:
+      contents: read
+      id-token: write
+      issues: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - name: bootstrap-state-bucket
+            dir: live/bootstrap/state-bucket
+          - name: dev-project-services
+            dir: live/dev/global/project-services
+          - name: dev-service-accounts
+            dir: live/dev/global/service-accounts
+          - name: dev-artifact-registry
+            dir: live/dev/us-central1/artifact-registry
+          - name: dev-gke-cluster
+            dir: live/dev/us-central1-a/gke-cluster
+    env:
+      WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+      SERVICE_ACCOUNT: ${{ vars.SERVICE_ACCOUNT }}
+
+    steps:
+      - id: pr
+        name: Resolve pull request revision
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            if (pr.data.state !== 'open') {
+              core.setFailed('Only open pull requests can run Terraform plans.');
+              return;
+            }
+
+            if (pr.data.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
+              core.setFailed('Terraform plans from forks are not allowed.');
+              return;
+            }
+
+            core.setOutput('sha', pr.data.head.sha);
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.sha }}
+
+      - name: Validate workflow configuration
+        run: |
+          set -euo pipefail
+          missing=0
+
+          for var_name in \
+            WORKLOAD_IDENTITY_PROVIDER \
+            SERVICE_ACCOUNT
+          do
+            if [ -z "${!var_name}" ]; then
+              echo "Missing required GitHub environment variable: ${var_name}" >&2
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            echo "Configure the missing values in the GitHub Environment vars for the development environment." >&2
+            exit 1
+          fi
+
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.4
+
+      - name: Terraform init
+        run: terraform -chdir=${{ matrix.stack.dir }} init -input=false
+
+      - name: Terraform plan
+        run: terraform -chdir=${{ matrix.stack.dir }} plan -input=false -out=tfplan -no-color
+
+      - name: Export plan text
+        run: terraform -chdir=${{ matrix.stack.dir }} show -no-color tfplan > "${{ runner.temp }}/${{ matrix.stack.name }}.plan.txt"
+
+      - name: Comment plan on pull request
+        uses: actions/github-script@v7
+        env:
+          STACK_NAME: ${{ matrix.stack.name }}
+          STACK_DIR: ${{ matrix.stack.dir }}
+          PLAN_PATH: ${{ runner.temp }}/${{ matrix.stack.name }}.plan.txt
+        with:
+          script: |
+            const fs = require('fs');
+
+            const stackName = process.env.STACK_NAME;
+            const stackDir = process.env.STACK_DIR;
+            const planPath = process.env.PLAN_PATH;
+            const marker = `<!-- terraform-dev-plan:${stackName} -->`;
+            const maxCommentLength = 60000;
+            const planText = fs.readFileSync(planPath, 'utf8');
+            const renderedPlan = planText.length > maxCommentLength
+              ? `${planText.slice(0, maxCommentLength)}\n\n[truncated, see workflow artifact for full plan]`
+              : planText;
+
+            const body = [
+              marker,
+              `## Terraform plan: ${stackName}`,
+              '',
+              `Stack: \`${stackDir}\``,
+              '',
+              '```terraform',
+              renderedPlan,
+              '```',
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
+        continue-on-error: true
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ matrix.stack.name }}
+          path: ${{ runner.temp }}/${{ matrix.stack.name }}.plan.txt

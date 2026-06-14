@@ -1,0 +1,9 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: moraes-public-cert
+  namespace: kong
+spec:
+  domains:
+    - moraes.lat
+    - api.moraes.lat
