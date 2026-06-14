@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - namespace.yaml
+  - api-moraes-lat-route.yaml
   - backendconfig.yaml
   - gatewayclass.yaml
   - gateway.yaml

@@ -209,4 +209,8 @@ resource "google_container_cluster" "this" {
   vertical_pod_autoscaling {
     enabled = false
   }
+
+  workload_identity_config {
+    workload_pool = "${var.project_id}.svc.id.goog"
+  }
 }

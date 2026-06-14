@@ -11,4 +11,4 @@ spec:
     unhealthyThreshold: 2
     type: HTTP
     requestPath: /lb-healthz
-    port: 80
+    port: 8000

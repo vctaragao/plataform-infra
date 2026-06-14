@@ -4,6 +4,7 @@ metadata:
   name: moraes-public-edge
   namespace: kong
   annotations:
+    kubernetes.io/ingress.class: gce
     kubernetes.io/ingress.global-static-ip-name: moraes-lat-ip
     networking.gke.io/managed-certificates: moraes-public-cert
 spec:
