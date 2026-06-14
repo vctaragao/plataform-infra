@@ -8,7 +8,6 @@ projects:
 
   - name: bootstrap-prod-state-bucket
     dir: live/bootstrap/prod-state-bucket
-    apply_requirements: [approved, mergeable]
     autoplan:
       enabled: true
 
@@ -34,30 +33,25 @@ projects:
 
   - name: prod-project-services
     dir: live/prod/global/project-services
-    apply_requirements: [approved, mergeable]
     autoplan:
       enabled: true
 
   - name: prod-service-accounts
     dir: live/prod/global/service-accounts
-    apply_requirements: [approved, mergeable]
     autoplan:
       enabled: true
 
   - name: prod-network
     dir: live/prod/us-central1/network
-    apply_requirements: [approved, mergeable]
     autoplan:
       enabled: true
 
   - name: prod-artifact-registry
     dir: live/prod/us-central1/artifact-registry
-    apply_requirements: [approved, mergeable]
     autoplan:
       enabled: true
 
   - name: prod-gke-cluster
     dir: live/prod/us-central1-a/gke-cluster
-    apply_requirements: [approved, mergeable]
     autoplan:
       enabled: true
