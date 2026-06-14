@@ -1,0 +1,52 @@
+version: 3
+
+projects:
+  - name: bootstrap-dev-state-bucket
+    dir: live/bootstrap/state-bucket
+    autoplan:
+      enabled: true
+
+  - name: dev-project-services
+    dir: live/dev/global/project-services
+    autoplan:
+      enabled: true
+
+  - name: dev-service-accounts
+    dir: live/dev/global/service-accounts
+    autoplan:
+      enabled: true
+
+  - name: dev-artifact-registry
+    dir: live/dev/us-central1/artifact-registry
+    autoplan:
+      enabled: true
+
+  - name: dev-gke-cluster
+    dir: live/dev/us-central1-a/gke-cluster
+    autoplan:
+      enabled: true
+
+  - name: prod-project-services
+    dir: live/prod/global/project-services
+    autoplan:
+      enabled: true
+
+  - name: prod-service-accounts
+    dir: live/prod/global/service-accounts
+    autoplan:
+      enabled: true
+
+  - name: prod-network
+    dir: live/prod/us-central1/network
+    autoplan:
+      enabled: true
+
+  - name: prod-artifact-registry
+    dir: live/prod/us-central1/artifact-registry
+    autoplan:
+      enabled: true
+
+  - name: prod-gke-cluster
+    dir: live/prod/us-central1-a/gke-cluster
+    autoplan:
+      enabled: true

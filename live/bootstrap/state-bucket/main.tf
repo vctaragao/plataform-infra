@@ -16,3 +16,9 @@ resource "google_storage_bucket_iam_member" "github_actions_state_admin" {
   role   = "roles/storage.admin"
   member = "serviceAccount:github-actions-deployer@teste-projet-496019.iam.gserviceaccount.com"
 }
+
+resource "google_storage_bucket_iam_member" "terraform_dev_state_admin" {
+  bucket = google_storage_bucket.terraform_state.name
+  role   = "roles/storage.admin"
+  member = "serviceAccount:terraform-dev@teste-projet-496019.iam.gserviceaccount.com"
+}

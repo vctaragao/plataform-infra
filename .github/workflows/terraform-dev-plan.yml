@@ -1,4 +1,4 @@
-name: Terraform Dev Plan
+name: Terraform Plan
 
 on:
   issue_comment:
@@ -17,7 +17,7 @@ jobs:
       github.event.comment.body == '.plan'
     name: Terraform plan (${{ matrix.stack.name }})
     runs-on: ubuntu-latest
-    environment: development
+    environment: ${{ matrix.stack.environment }}
     permissions:
       contents: read
       id-token: write
@@ -27,16 +27,36 @@ jobs:
       fail-fast: false
       matrix:
         stack:
-          - name: bootstrap-state-bucket
+          - name: bootstrap-dev-state-bucket
+            environment: development
             dir: live/bootstrap/state-bucket
           - name: dev-project-services
+            environment: development
             dir: live/dev/global/project-services
           - name: dev-service-accounts
+            environment: development
             dir: live/dev/global/service-accounts
           - name: dev-artifact-registry
+            environment: development
             dir: live/dev/us-central1/artifact-registry
           - name: dev-gke-cluster
+            environment: development
             dir: live/dev/us-central1-a/gke-cluster
+          - name: prod-project-services
+            environment: production
+            dir: live/prod/global/project-services
+          - name: prod-service-accounts
+            environment: production
+            dir: live/prod/global/service-accounts
+          - name: prod-network
+            environment: production
+            dir: live/prod/us-central1/network
+          - name: prod-artifact-registry
+            environment: production
+            dir: live/prod/us-central1/artifact-registry
+          - name: prod-gke-cluster
+            environment: production
+            dir: live/prod/us-central1-a/gke-cluster
     env:
       WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
       SERVICE_ACCOUNT: ${{ vars.SERVICE_ACCOUNT }}
@@ -86,7 +106,7 @@ jobs:
           done
 
           if [ "$missing" -ne 0 ]; then
-            echo "Configure the missing values in the GitHub Environment vars for the development environment." >&2
+            echo "Configure the missing values in the GitHub Environment vars for this stack environment." >&2
             exit 1
           fi
 
