@@ -1,0 +1,50 @@
+name: Dispatch Atlantis Manifests
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  dispatch-atlantis-manifests:
+    if: >-
+      github.event.issue.pull_request &&
+      github.event.comment.body == '.deploy-atlantis'
+    name: Dispatch Atlantis Manifests
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Dispatch PR branch Atlantis deploy workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            if (pr.data.state !== 'open') {
+              core.setFailed('Only open pull requests can be deployed to development.');
+              return;
+            }
+
+            if (pr.data.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
+              core.setFailed('Pull request deployments from forks are not allowed.');
+              return;
+            }
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'apply-atlantis-manifests.yml',
+              ref: pr.data.head.ref,
+              inputs: {
+                target_environment: 'development',
+                checkout_sha: pr.data.head.sha,
+              },
+            });
