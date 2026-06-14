@@ -33,6 +33,8 @@ Recommended prod bootstrap order:
 5. `live/prod/us-central1/artifact-registry`
 6. `live/prod/us-central1-a/gke-cluster`
 
+The first prod state bucket apply must be done outside Atlantis with backend disabled because the target GCS backend does not exist yet.
+
 Useful commands:
 
 ```bash
@@ -67,6 +69,8 @@ Required GitHub Environment vars for both `development` and `production`:
 - `SERVICE_ACCOUNT`
 
 Atlantis uses a single runtime identity but routes Terraform operations per stack. The GCS backend still uses the runtime identity directly, so the prod state bucket grants direct access to the Atlantis service account while the Terraform provider impersonates `terraform-dev` or `terraform-prod` for resource changes.
+
+Because of that bootstrap constraint, `live/bootstrap/prod-state-bucket` is intentionally excluded from Atlantis and the PR plan workflow until the bucket exists.
 
 The legacy generated import layout at the repo root has been retired in favor of the `live/` and `modules/` structure.
 

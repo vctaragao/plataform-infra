@@ -16,6 +16,8 @@ Bootstrap/apply order:
 4. `us-central1/artifact-registry`
 5. `us-central1-a/gke-cluster`
 
+Before that sequence, run the one-time `live/bootstrap/prod-state-bucket` stack manually with backend disabled so the remote state bucket exists.
+
 CI plans for these stacks run through the `Terraform Plan` GitHub Actions workflow using the `production` GitHub Environment.
 
 Trigger a plan by commenting `.plan` on an open pull request from this repository.

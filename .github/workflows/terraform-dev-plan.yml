@@ -42,9 +42,6 @@ jobs:
           - name: dev-gke-cluster
             environment: development
             dir: live/dev/us-central1-a/gke-cluster
-          - name: bootstrap-prod-state-bucket
-            environment: production
-            dir: live/bootstrap/prod-state-bucket
           - name: prod-project-services
             environment: production
             dir: live/prod/global/project-services

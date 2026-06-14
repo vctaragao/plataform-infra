@@ -6,11 +6,6 @@ projects:
     autoplan:
       enabled: true
 
-  - name: bootstrap-prod-state-bucket
-    dir: live/bootstrap/prod-state-bucket
-    autoplan:
-      enabled: true
-
   - name: dev-project-services
     dir: live/dev/global/project-services
     autoplan:
