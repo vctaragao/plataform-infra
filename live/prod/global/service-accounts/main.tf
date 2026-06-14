@@ -24,6 +24,7 @@ locals {
 
   atlantis_project_roles = toset([
     "roles/artifactregistry.admin",
+    "roles/compute.networkAdmin",
     "roles/compute.viewer",
     "roles/container.admin",
     "roles/iam.serviceAccountAdmin",
@@ -32,6 +33,7 @@ locals {
 
   terraform_prod_project_roles = toset([
     "roles/artifactregistry.admin",
+    "roles/compute.networkAdmin",
     "roles/compute.viewer",
     "roles/container.admin",
     "roles/iam.serviceAccountAdmin",

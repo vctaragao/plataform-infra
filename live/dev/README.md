@@ -11,3 +11,5 @@ Stacks:
 CI plans for these stacks run through the `Terraform Plan` GitHub Actions workflow using the `development` GitHub Environment.
 
 Trigger a plan by commenting `.plan` on an open pull request from this repository.
+
+The `dev` environment remains the reference shape for the `prod` stack layout.

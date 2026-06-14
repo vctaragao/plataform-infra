@@ -51,9 +51,15 @@ jobs:
           - name: prod-service-accounts
             environment: production
             dir: live/prod/global/service-accounts
+          - name: prod-network
+            environment: production
+            dir: live/prod/us-central1/network
           - name: prod-artifact-registry
             environment: production
             dir: live/prod/us-central1/artifact-registry
+          - name: prod-gke-cluster
+            environment: production
+            dir: live/prod/us-central1-a/gke-cluster
     env:
       WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
       SERVICE_ACCOUNT: ${{ vars.SERVICE_ACCOUNT }}
@@ -103,7 +109,7 @@ jobs:
           done
 
           if [ "$missing" -ne 0 ]; then
-            echo "Configure the missing values in the GitHub Environment vars for the development environment." >&2
+            echo "Configure the missing values in the GitHub Environment vars for this stack environment." >&2
             exit 1
           fi
 

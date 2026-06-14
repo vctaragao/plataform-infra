@@ -44,8 +44,20 @@ projects:
     autoplan:
       enabled: true
 
+  - name: prod-network
+    dir: live/prod/us-central1/network
+    apply_requirements: [approved, mergeable]
+    autoplan:
+      enabled: true
+
   - name: prod-artifact-registry
     dir: live/prod/us-central1/artifact-registry
+    apply_requirements: [approved, mergeable]
+    autoplan:
+      enabled: true
+
+  - name: prod-gke-cluster
+    dir: live/prod/us-central1-a/gke-cluster
     apply_requirements: [approved, mergeable]
     autoplan:
       enabled: true

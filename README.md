@@ -19,9 +19,19 @@ Current Terraform stacks:
 - `live/bootstrap/prod-state-bucket`
 - `live/prod/global/project-services`
 - `live/prod/global/service-accounts`
+- `live/prod/us-central1/network`
 - `live/prod/us-central1/artifact-registry`
+- `live/prod/us-central1-a/gke-cluster`
 
-Prod currently uses a separate Terraform state bucket. The prod GKE stack is intentionally not checked in yet because the prod project still needs its network and secondary IP ranges bootstrapped before a cluster definition can be wired safely.
+Prod currently uses a separate Terraform state bucket.
+
+Recommended prod bootstrap order:
+1. `live/bootstrap/prod-state-bucket`
+2. `live/prod/global/project-services`
+3. `live/prod/global/service-accounts`
+4. `live/prod/us-central1/network`
+5. `live/prod/us-central1/artifact-registry`
+6. `live/prod/us-central1-a/gke-cluster`
 
 Useful commands:
 
@@ -34,7 +44,9 @@ make tf-plan STACK=live/dev/us-central1/artifact-registry
 make tf-plan STACK=live/dev/us-central1-a/gke-cluster
 make tf-plan STACK=live/prod/global/project-services
 make tf-plan STACK=live/prod/global/service-accounts
+make tf-plan STACK=live/prod/us-central1/network
 make tf-plan STACK=live/prod/us-central1/artifact-registry
+make tf-plan STACK=live/prod/us-central1-a/gke-cluster
 ```
 
 For local Terraform work, use your user credentials instead of the `google-sheets-mcp` service account key:

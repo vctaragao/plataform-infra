@@ -5,9 +5,16 @@ Production Terraform environment for this repository.
 Stacks:
 - `global/project-services`
 - `global/service-accounts`
+- `us-central1/network`
 - `us-central1/artifact-registry`
+- `us-central1-a/gke-cluster`
 
-The prod GKE stack is intentionally deferred until the prod project network and secondary IP ranges are bootstrapped.
+Bootstrap/apply order:
+1. `global/project-services`
+2. `global/service-accounts`
+3. `us-central1/network`
+4. `us-central1/artifact-registry`
+5. `us-central1-a/gke-cluster`
 
 CI plans for these stacks run through the `Terraform Plan` GitHub Actions workflow using the `production` GitHub Environment.
 

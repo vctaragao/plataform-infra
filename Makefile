@@ -9,7 +9,9 @@ TF_STACKS := \
 	live/dev/us-central1-a/gke-cluster \
 	live/prod/global/project-services \
 	live/prod/global/service-accounts \
-	live/prod/us-central1/artifact-registry
+	live/prod/us-central1/network \
+	live/prod/us-central1/artifact-registry \
+	live/prod/us-central1-a/gke-cluster
 
 TF_MODULES := \
 	modules/gcp/project-services \
