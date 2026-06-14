@@ -1,4 +1,5 @@
 locals {
+  # No-op marker to exercise Atlantis project detection on this stack.
   project_id = "1028482798444"
 
   services = toset([
