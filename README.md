@@ -9,12 +9,19 @@ Terraform is organized using a `modules/` plus `live/` layout.
 - `modules/` contains reusable GCP infrastructure modules
 - `live/bootstrap/` contains one-time bootstrap stacks such as the Terraform state bucket
 - `live/dev/` contains the dev environment stacks, split by responsibility and state
+- `live/prod/` contains the prod environment stacks, split by responsibility and state
 
 Current Terraform stacks:
 - `live/dev/global/project-services`
 - `live/dev/global/service-accounts`
 - `live/dev/us-central1/artifact-registry`
 - `live/dev/us-central1-a/gke-cluster`
+- `live/bootstrap/prod-state-bucket`
+- `live/prod/global/project-services`
+- `live/prod/global/service-accounts`
+- `live/prod/us-central1/artifact-registry`
+
+Prod currently uses a separate Terraform state bucket. The prod GKE stack is intentionally not checked in yet because the prod project still needs its network and secondary IP ranges bootstrapped before a cluster definition can be wired safely.
 
 Useful commands:
 
@@ -25,6 +32,9 @@ make tf-plan STACK=live/dev/global/project-services
 make tf-plan STACK=live/dev/global/service-accounts
 make tf-plan STACK=live/dev/us-central1/artifact-registry
 make tf-plan STACK=live/dev/us-central1-a/gke-cluster
+make tf-plan STACK=live/prod/global/project-services
+make tf-plan STACK=live/prod/global/service-accounts
+make tf-plan STACK=live/prod/us-central1/artifact-registry
 ```
 
 For local Terraform work, use your user credentials instead of the `google-sheets-mcp` service account key:
@@ -35,14 +45,16 @@ env -u GOOGLE_APPLICATION_CREDENTIALS terraform -chdir=live/dev/global/project-s
 
 GitHub Actions:
 - `Terraform Checks` runs `fmt` and `validate`
-- `Terraform Dev Plan` runs a real `terraform plan` against the bootstrap and `live/dev` stacks using Workload Identity from the `development` GitHub Environment
+- `Terraform Plan` runs a real `terraform plan` against the bootstrap, `live/dev`, and `live/prod` stacks using Workload Identity from the matching GitHub Environment
 - trigger it by commenting `.plan` on an open pull request from this repository
 - each stack posts or updates its own plan comment on the PR
 - full plan output remains available as a workflow artifact for each stack
 
-Required GitHub Environment vars for `development`:
+Required GitHub Environment vars for both `development` and `production`:
 - `WORKLOAD_IDENTITY_PROVIDER`
 - `SERVICE_ACCOUNT`
+
+Atlantis uses a single runtime identity but routes Terraform operations per stack. The GCS backend still uses the runtime identity directly, so the prod state bucket grants direct access to the Atlantis service account while the Terraform provider impersonates `terraform-dev` or `terraform-prod` for resource changes.
 
 The legacy generated import layout at the repo root has been retired in favor of the `live/` and `modules/` structure.
 
