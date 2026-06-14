@@ -31,9 +31,6 @@ logLevel: ""
 # Check values.yaml for examples.
 github:
   user: atlantisbot564
-  # Populated from the repository environment secrets when Atlantis deployment automation is added.
-  token: "<ATLANTIS_BOT_PA_TOKEN>"
-  secret: "<ATLANTIS_WEBHOOK>"
   hostname: ""
   org: vctaragao
 
@@ -109,7 +106,7 @@ azuredevops: {}
 #   webhookPassword: baz
 
 # -- If managing secrets outside the chart for the webhook, use this variable to reference the secret name
-vcsSecretName: ""
+vcsSecretName: "atlantis-webhook"
 
 # -- When referencing Terraform modules in private repositories, it may be helpful
 # (necessary?) to use redirection in a .gitconfig.
