@@ -7,34 +7,36 @@ on:
     paths:
       - '.github/workflows/apply-atlantis-manifests.yml'
       - 'k8s/atlantis/**'
-  issue_comment:
-    types:
-      - created
   workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'Deployment environment'
+        required: true
+        default: production
+        type: choice
+        options:
+          - development
+          - production
+      checkout_sha:
+        description: 'Optional commit SHA to check out after workflow dispatch'
+        required: false
+        type: string
 
 concurrency:
-  group: apply-atlantis-manifests-${{ github.event_name == 'issue_comment' && 'development' || 'production' }}
+  group: apply-atlantis-manifests-${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'production' }}
   cancel-in-progress: true
 
 jobs:
   apply-atlantis-manifests:
-    if: >-
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'issue_comment' &&
-        github.event.issue.pull_request &&
-        github.event.comment.body == '.deploy-atlantis'
-      )
     name: Apply Atlantis Manifests
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'issue_comment' && 'development' || 'production' }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'production' }}
     permissions:
       contents: read
       id-token: write
       pull-requests: read
     env:
-      TARGET_ENVIRONMENT: ${{ github.event_name == 'issue_comment' && 'development' || 'production' }}
+      TARGET_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'production' }}
       GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}
       GKE_LOCATION: ${{ vars.GKE_LOCATION }}
       WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
@@ -43,34 +45,10 @@ jobs:
       ATLANTIS_WEBHOOK: ${{ secrets.ATLANTIS_WEBHOOK }}
 
     steps:
-      - id: pr
-        name: Resolve pull request revision
-        if: github.event_name == 'issue_comment'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pr = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-            });
-
-            if (pr.data.state !== 'open') {
-              core.setFailed('Only open pull requests can be deployed to development.');
-              return;
-            }
-
-            if (pr.data.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
-              core.setFailed('Pull request deployments from forks are not allowed.');
-              return;
-            }
-
-            core.setOutput('sha', pr.data.head.sha);
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'issue_comment' && steps.pr.outputs.sha || github.sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.checkout_sha || github.sha }}
 
       - name: Validate workflow configuration
         run: |
@@ -139,8 +117,10 @@ jobs:
       - name: Verify Atlantis resources
         run: |
           set -euo pipefail
+          kubectl rollout status statefulset/atlantis -n default --timeout=5m
+          kubectl wait --for=condition=Ready pod -l app=atlantis -n default --timeout=5m
           kubectl get pods -n default -l app=atlantis
           kubectl get svc -n default atlantis
           kubectl get managedcertificate -n default atlantis-cert
           kubectl get ingress -n default atlantis
-          helm test atlantis -n default
+          helm test atlantis -n default --logs --timeout 3m
